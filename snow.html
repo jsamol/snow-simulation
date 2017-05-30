@@ -9,7 +9,7 @@
             var renderer,
                 scene,
                 camera,
-                cameraRadius = 200,
+                cameraRadius = 100,
                 cameraTarget,
                 particleSystem,
                 particleSystemHeight = 100,
@@ -17,14 +17,14 @@
                 texture;
 
             function init() {
-                var particles = 700,
+                var particles = 1000,
                     width = 100,
                     height = particleSystemHeight,
                     depth = 100,
                     rx = 2.5,
                     rz = 2.5,
-                    size = 700,
-                    scale = 3.0,
+                    size = 500,
+                    scale = 5.0,
                     opacity = 0.7;
 
                 renderer = new THREE.WebGLRenderer();
