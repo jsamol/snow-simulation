@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Snow simulation</title>
+        <link rel="stylesheet" type="text/css" href="css/style.css" />
+        <script type="text/javascript" src="lib/jquery-3.2.1.min.js"></script>
+        <script type="text/javascript" src="lib/three.min.js"></script>
+        <script type="text/javascript">
+            var renderer,
+                scene,
+                camera,
+                cameraRadius = 200,
+                cameraTarget,
+                particleSystem,
+                particleSystemHeight = 100,
+                clock;
+
+            function init() {
+                var particles = 100,
+                    width = 100,
+                    height = particleSystemHeight,
+                    depth = 100;
+
+                renderer = new THREE.WebGLRenderer();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setClearColor(new THREE.Color(0x000000), 1.0);
+
+                scene = new THREE.Scene();
+                camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000);
+                cameraTarget = new THREE.Vector3(0, 0, 0);
+
+                var geometry = new THREE.Geometry();
+                var material = new THREE.ParticleBasicMaterial({ color: 0xffffff });
+
+                for (var i = 0; i < particles; i++) {
+                    var vertex = new THREE.Vector3(
+                        width * (Math.random() - 0.5),
+                        height * Math.random(),
+                        depth * (Math.random() - 0.5)
+                    );
+
+                    geometry.vertices.push(vertex);
+                }
+
+                particleSystem = new THREE.ParticleSystem(geometry, material);
+                particleSystem.position.y = -height/2;
+
+                scene.add(particleSystem);
+
+                clock = new THREE.Clock();
+                $("#container").append(renderer.domElement);
+            }
+
+            function updateParticleSystem(elapsed) {
+                var geometry = particleSystem.geometry;
+                var vertices = geometry.vertices;
+                var speedY = 10 * elapsed;
+
+                for (var i = 0; i < vertices.length; i++) {
+                    var v = vertices[i];
+
+                    if (v.y > 0) {
+                        v.y -= speedY * Math.random();
+                    }
+                    else {
+                        v.y = particleSystemHeight;
+                    }
+                }
+
+                geometry.verticesNeedUpdate = true;
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                var delta = clock.getDelta();
+                var t = clock.getElapsedTime() * 0.5;
+                updateParticleSystem(delta);
+
+                camera.position.set(cameraRadius * Math.sin(t), 0, cameraRadius * Math.cos(t));
+                camera.lookAt(cameraTarget);
+
+                renderer.clear();
+                renderer.render(scene, camera);
+            }
+
+            $(document).ready(function() {
+                init();
+                animate();
+            })
+
+        </script>
+    <head>
+    <body>
+        <div id="container"></div>
+    </body>
+</html>
