@@ -19,7 +19,12 @@
                 var particles = 100,
                     width = 100,
                     height = particleSystemHeight,
-                    depth = 100;
+                    depth = 100,
+                    rx = 2.5,
+                    rz = 2.5,
+                    size = 100,
+                    scale = 5.0,
+                    opacity = 0.7;
 
                 renderer = new THREE.WebGLRenderer();
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -33,10 +38,17 @@
                 var material = new THREE.ShaderMaterial({
                     uniforms: {
                         height: { type: 'f', value: particleSystemHeight },
-                        elapsedTime: { type: 'f', value: 0 }
+                        elapsedTime: { type: 'f', value: 0 },
+                        rX: { type: 'f', value: rx },
+                        rZ: { type: 'f', value: rz },
+                        size: { type: 'f', value: size },
+                        scale: { type: 'f', value: scale },
+                        opacity: { type: 'f', value: opacity }
                     },
                     vertexShader: $("#vertexShader").text(),
-                    fragmentShader: $("#fragmentShader").text()
+                    fragmentShader: $("#fragmentShader").text(),
+                    blending: THREE.AdditiveBlending,
+                    transparent: true
                 });
 
                 for (var i = 0; i < particles; i++) {
@@ -62,11 +74,10 @@
                 requestAnimationFrame(animate);
                 var delta = clock.getDelta();
                 var elapsedTime = clock.getElapsedTime();
-                var t = elapsedTime * 0.5;
 
                 particleSystem.material.uniforms.elapsedTime.value = elapsedTime * 10;
 
-                camera.position.set(cameraRadius * Math.sin(t), 0, cameraRadius * Math.cos(t));
+                camera.position.set(0, 0, cameraRadius);
                 camera.lookAt(cameraTarget);
 
                 renderer.clear();
@@ -82,16 +93,28 @@
         <script type="x-shader/x-vertex" id="vertexShader">
             uniform float height;
             uniform float elapsedTime;
+            uniform float rx;
+            uniform float rz;
+            uniform float size;
+            uniform float scale;
 
             void main() {
                 vec3 pos = position;
+                pos.x += cos((elapsedTime + position.z) * 0.25) * rx;
                 pos.y = mod(pos.y - elapsedTime, height);
-                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                pos.z += sin((elapsedTime + position.x) * 0.25) * rz;
+
+                vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+
+                gl_PointSize = size * (scale / length(mvPosition.xyz));
+                gl_Position = projectionMatrix * mvPosition;
             }
         </script>
         <script type="x-shader/x-fragment" id="fragmentShader">
+            uniform float opacity;
+
             void main() {
-                gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+                gl_FragColor = vec4(1.0, 1.0, 1.0, opacity);
             }
         </script>
     <head>
