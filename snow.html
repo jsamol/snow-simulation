@@ -5,6 +5,7 @@
         <link rel="stylesheet" type="text/css" href="css/style.css" />
         <script type="text/javascript" src="lib/jquery-3.2.1.min.js"></script>
         <script type="text/javascript" src="lib/three.min.js"></script>
+        <script type="text/javascript" src="lib/dat.gui.min.js"></script>
         <script type="text/javascript">
             var renderer,
                 scene,
@@ -14,7 +15,9 @@
                 particleSystem,
                 particleSystemHeight = 100,
                 clock,
-                texture;
+                texture,
+                onParametersUpdate,
+                gui;
 
             function init() {
                 var particles = 1000,
@@ -23,9 +26,13 @@
                     depth = 100,
                     rx = 2.5,
                     rz = 2.5,
-                    size = 500,
-                    scale = 5.0,
-                    opacity = 0.7;
+                    controls = {
+                        size: 500,
+                        scale: 5.0,
+                        opacity: 0.7,
+                        speedHorizontal: 1.0,
+                        speedVertical: 1.0
+                    };
 
                 renderer = new THREE.WebGLRenderer();
                 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -44,10 +51,12 @@
                         elapsedTime: { type: 'f', value: 0 },
                         rX: { type: 'f', value: rx },
                         rZ: { type: 'f', value: rz },
-                        size: { type: 'f', value: size },
-                        scale: { type: 'f', value: scale },
-                        opacity: { type: 'f', value: opacity },
-                        texture: { type: 'f', value: texture }
+                        size: { type: 'f', value: controls.size },
+                        scale: { type: 'f', value: controls.scale },
+                        opacity: { type: 'f', value: controls.opacity },
+                        texture: { type: 'f', value: texture },
+                        speedHorizontal: {type: 'f', value: controls.speedHorizontal},
+                        speedVertical: {type: 'f', value: controls.speedVertical}
                     },
                     vertexShader: $("#vertexShader").text(),
                     fragmentShader: $("#fragmentShader").text(),
@@ -72,7 +81,29 @@
                 scene.add(particleSystem);
 
                 clock = new THREE.Clock();
+                sizeGl = 500;
                 $("#container").append(renderer.domElement);
+
+                onParametersUpdate = function( v ) {
+                    material.uniforms.size.value = controls.size;
+                    material.uniforms.scale.value = controls.scale;
+                    material.uniforms.opacity.value = controls.opacity;
+                   // material.uniforms.color.value.set( color );
+
+
+                    material.uniforms.speedHorizontal.value = controls.speedHorizontal;
+                    material.uniforms.speedVertical.value = controls.speedVertical;
+                };
+
+                gui = new dat.GUI();
+
+                gui.add( controls, 'size', 1, 400 ).onChange( onParametersUpdate );
+                gui.add( controls, 'scale', 1, 30 ).onChange( onParametersUpdate );
+                gui.add( controls, 'opacity', 0, 1 ).onChange( onParametersUpdate );
+                gui.add( controls, 'speedHorizontal', 0.1, 3 ).onChange( onParametersUpdate );
+                gui.add( controls, 'speedVertical', 0.1, 3 ).onChange( onParametersUpdate );
+
+
             }
 
             function animate() {
@@ -102,12 +133,14 @@
             uniform float rz;
             uniform float size;
             uniform float scale;
+            uniform float speedHorizontal;
+            uniform float speedVertical;
 
             void main() {
                 vec3 pos = position;
-                pos.x += cos((elapsedTime + position.z) * 0.25) * rx;
-                pos.y = mod(pos.y - elapsedTime, height);
-                pos.z += sin((elapsedTime + position.x) * 0.25) * rz;
+                pos.x += cos((elapsedTime + position.z) * 0.25 * speedHorizontal) * rx;
+                pos.y = mod(pos.y - elapsedTime * speedVertical, height);
+                pos.z += sin((elapsedTime + position.x) * 0.25 * speedHorizontal) * rz;
 
                 vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
 
